@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Comparativo - Planes de Gobierno en Salud</title>
+    <style>
+        :root {
+            --color-bg-base: #0f172a;
+            --color-bg-elevated: #020617;
+            --color-bg-surface: #1e293b;
+            --color-bg-muted: #334155;
+            --color-text-primary: #f1f5f9;
+            --color-text-secondary: #cbd5e1;
+            --color-text-muted: #94a3b8;
+            --color-text-accent: #38bdf8;
+            --color-primary: #38bdf8;
+            --color-border: rgba(94, 82, 64, 0.3);
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-error: #ef4444;
+            --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --color-bg-base: #ffffff;
+                --color-bg-elevated: #f8fafc;
+                --color-bg-surface: #f1f5f9;
+                --color-bg-muted: #e2e8f0;
+                --color-text-primary: #0f172a;
+                --color-text-secondary: #475569;
+                --color-text-muted: #64748b;
+                --color-text-accent: #0284c7;
+                --color-primary: #0284c7;
+                --color-border: rgba(94, 82, 64, 0.2);
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family-base);
+            background: var(--color-bg-base);
+            color: var(--color-text-primary);
+            line-height: 1.6;
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: var(--color-bg-surface);
+            border-right: 1px solid var(--color-border);
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .logo {
+            margin-bottom: 32px;
+        }
+
+        .logo h1 {
+            font-size: 1.25rem;
+            color: var(--color-primary);
+            margin-bottom: 4px;
+        }
+
+        .logo p {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+        }
+
+        .nav-section {
+            margin-bottom: 24px;
+        }
+
+        .nav-section h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--color-text-muted);
+            margin-bottom: 12px;
+            letter-spacing: 0.05em;
+        }
+
+        .filter-group {
+            margin-bottom: 20px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 8px 10px;
+            background: var(--color-bg-base);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            color: var(--color-text-primary);
+            font-size: 0.875rem;
+        }
+
+        select:focus, input:focus {
+            outline: 2px solid var(--color-primary);
+            border-color: var(--color-primary);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 8px 16px;
+            background: var(--color-primary);
+            color: var(--color-bg-base);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: opacity 0.2s;
+            margin-bottom: 8px;
+        }
+
+        .btn:hover {
+            opacity: 0.85;
+        }
+
+        .btn-secondary {
+            background: var(--color-bg-muted);
+            color: var(--color-text-primary);
+        }
+
+        .main-content {
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .header {
+            margin-bottom: 24px;
+        }
+
+        .header h2 {
+            font-size: 1.75rem;
+            margin-bottom: 8px;
+            color: var(--color-text-primary);
+        }
+
+        .header p {
+            color: var(--color-text-secondary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .stat-card h4 {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--color-primary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+            margin-top: 4px;
+        }
+
+        .chart-section {
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .chart-section h3 {
+            font-size: 1.125rem;
+            margin-bottom: 16px;
+            color: var(--color-text-primary);
+        }
+
+        .chart-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .bar-label {
+            min-width: 150px;
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+        }
+
+        .bar-container {
+            flex: 1;
+            height: 28px;
+            background: var(--color-bg-muted);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: var(--color-primary);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+        }
+
+        .bar-value {
+            font-size: 0.75rem;
+            color: var(--color-bg-base);
+            font-weight: 600;
+        }
+
+        .comparison-table {
+            background: var(--color-bg-surface);
+            border-radius: 12px;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 600px;
+            border: 1px solid var(--color-border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--color-bg-muted);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            border-bottom: 2px solid var(--color-border);
+            white-space: nowrap;
+            font-size: 0.875rem;
+        }
+
+        th.tema-column {
+            min-width: 180px;
+            position: sticky;
+            left: 0;
+            background: var(--color-bg-muted);
+            z-index: 20;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--color-border);
+            color: var(--color-text-secondary);
+            vertical-align: top;
+            font-size: 0.875rem;
+        }
+
+        td.tema-column {
+            font-weight: 600;
+            color: var(--color-text-primary);
+            position: sticky;
+            left: 0;
+            background: var(--color-bg-surface);
+            border-right: 1px solid var(--color-border);
+        }
+
+        tbody tr:hover {
+            background: var(--color-bg-base);
+        }
+
+        .propuesta-cell {
+            max-width: 280px;
+            line-height: 1.5;
+        }
+
+        .propuesta-fuerte {
+            color: var(--color-success);
+            font-weight: 500;
+        }
+
+        .sin-detalle {
+            color: var(--color-text-muted);
+            font-style: italic;
+        }
+
+        .partido-header {
+            cursor: pointer;
+            user-select: none;
+            min-width: 50px;
+        }
+
+        .partido-header:hover {
+            color: var(--color-primary);
+        }
+
+        .collapsed-column {
+            width: 30px;
+            padding: 12px 8px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--color-success);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--color-warning);
+        }
+
+        .badge-muted {
+            background: var(--color-bg-muted);
+            color: var(--color-text-muted);
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid var(--color-border);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>Dashboard Salud</h1>
+                <p>Análisis comparativo</p>
+            </div>
+
+            <nav class="nav-section">
+                <h3>Filtros</h3>
+                
+                <div class="filter-group">
+                    <label for="temaFilter">Tema:</label>
+                    <select id="temaFilter">
+                        <option value="">Todos los temas</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="partidoFilter">Partidos:</label>
+                    <select id="partidoFilter" multiple size="8">
+                    </select>
+                    <button type="button" class="btn btn-secondary" style="margin-top: 8px;" onclick="selectAllPartidos()">Seleccionar todos</button>
+                    <button type="button" class="btn btn-secondary" onclick="clearPartidos()">Limpiar</button>
+                </div>
+
+                <div class="filter-group">
+                    <label for="contenidoFilter">Búsqueda:</label>
+                    <input type="text" id="contenidoFilter" placeholder="Buscar en propuestas...">
+                </div>
+
+                <button class="btn btn-secondary" onclick="resetFilters()">Restablecer filtros</button>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="header">
+                <h2>Comparativo de Planes de Gobierno</h2>
+                <p>Análisis de propuestas en temas de salud - Elecciones Perú</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Partidos Totales</h4>
+                    <div class="stat-value" id="statTotalPartidos">15</div>
+                    <div class="stat-label">Registrados</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Partidos Filtrados</h4>
+                    <div class="stat-value" id="statFilteredPartidos">15</div>
+                    <div class="stat-label">Mostrando</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Temas de Análisis</h4>
+                    <div class="stat-value">6</div>
+                    <div class="stat-label">Categorías</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Propuestas Fuertes</h4>
+                    <div class="stat-value" id="statPropuestasFuertes">0</div>
+                    <div class="stat-label">Identificadas</div>
+                </div>
+            </div>
+
+            <div class="chart-section">
+                <h3>Distribución de Propuestas por Tema</h3>
+                <div class="chart-bars" id="chartBars"></div>
+            </div>
+
+            <div class="comparison-table">
+                <table>
+                    <thead id="tableHeader"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const data = {
+            temas: [
+                "Fortalecimiento del Primer Nivel de Atención",
+                "Acceso Equitativo y Oportuno a Medicamentos",
+                "Fragmentación y Segmentación del Sistema",
+                "Gobernanza y Descentralización en Salud",
+                "Salud Pública y Desarrollo Económico",
+                "Recursos Humanos en Salud"
+            ],
+            partidos: [
+                "Partido Trabajadores y Emprendedores",
+                "Partido Aprista Peruano",
+                "Fuerza y Libertad",
+                "Partido Morado",
+                "Juntos por el Perú",
+                "PROGRESEMOS",
+                "Partido Salvemos al Perú",
+                "Frente de la Esperanza",
+                "Partido Demócrata Unido Perú",
+                "Perú Acción",
+                "Partido Primero La Gente",
+                "Perú Moderno",
+                "Partido Democrático Federal",
+                "SíCreo",
+                "Fe en el Perú"
+            ],
+            propuestas: {
+                "Fortalecimiento del Primer Nivel de Atención": [
+                    "Fuerte: Implementar red nacional de atención médica preventiva. Meta: 100% de cobertura en zonas rurales (atención primaria).",
+                    "Propone un enfoque en la Salud Pública, implícito para el primer nivel.",
+                    "Menciona Salud Universal, Integral y de Calidad.",
+                    "Fuerte: Propone un Cambio de Paradigma: De Curativo a Preventivo. Detalla la Cartera de Servicios por Niveles de Atención.",
+                    "Propone la salud como prioridad pública.",
+                    "Fuerte: Aboga por el Acceso Integral a la Salud y menciona el enfoque en la Salud de la primera infancia.",
+                    "Fuerte: Enfocado en cerrar brechas en salud, con foco en la primera infancia y cero anemia y desnutrición, lo cual es un objetivo de salud pública y primer nivel de atención.",
+                    "Se centra en la Eliminación total de la desnutrición y anemia infantil y la inseguridad alimentaria (Decretos de Urgencia), que son acciones primarias de salud pública.",
+                    "Prioriza la asignación de presupuesto a la salud como parte de la reforma del Estado.",
+                    "Menciona la provisión de servicios básicos como salud, parte del pago de la deuda social.",
+                    "Busca cerrar brechas en salud (Eje 2), lo que implica fortalecer la capacidad de atención.",
+                    "Propone una salud con bienestar ciudadano, que busca un enfoque integral.",
+                    "Sin detalle específico en el fragmento, pero es implícito en la visión de desarrollo en todo el territorio.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento."
+                ],
+                "Acceso Equitativo y Oportuno a Medicamentos": [
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Específico: Menciona el Abastecimiento de medicamentos e insumos dentro del eje de Vida Digna.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento."
+                ],
+                "Fragmentación y Segmentación del Sistema": [
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Menciona Salud Universal, lo que implica superar la segmentación.",
+                    "Específico: Propone una Reforma Integral del Sistema de Salud con una Ruta de Convergencia Progresiva para unificar el sistema.",
+                    "Sin detalle específico en el fragmento.",
+                    "A favor de un Acceso Integral a la Salud, lo que implica reducir la fragmentación.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento."
+                ],
+                "Gobernanza y Descentralización en Salud": [
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Específico: Propone Macrorregiones de Salud como nueva arquitectura territorial para la gestión y descentralización.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Aboga por una renovación en la estructura y funcionamiento del Estado al servicio del ciudadano.",
+                    "Busca la Refundación del Perú y reformas, lo que implica cambios en la gobernanza.",
+                    "Propone la descentralización de los ministerios (incluyendo Salud) a las regiones y/o provincias.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "La propuesta está enmarcada en una visión de país hacia el desarrollo del primer mundo con reformas necesarias.",
+                    "Fuerte: Propone un Modelo de Estado Federal con 12 regiones que reformaría profundamente la gobernanza del sector en el nivel subnacional.",
+                    "Defiende el principio de Separación de Poderes y el libre mercado, sin propuestas de gobernanza sectorial específicas.",
+                    "Aboga por el principio de Subsidiariedad del Estado, actuando donde el mercado es insuficiente, y por la Equidad Territorial (cerrar brechas entre regiones)."
+                ],
+                "Salud Pública y Desarrollo Económico": [
+                    "Vincula la solución del déficit de salud preventiva a la dimensión social.",
+                    "La salud pública es parte de la Dimensión Social, vinculada al desarrollo general.",
+                    "Sin detalle específico en el fragmento.",
+                    "La salud es parte del EJE 1: DESARROLLO HUMANO, que se conecta explícitamente con el EJE 2: DESARROLLO ECONÓMICO.",
+                    "Vincula la salud con la reivindicación de la dignidad y la justicia social, factores de desarrollo.",
+                    "Es un componente del eje Vida Digna, junto con la Economía y Empleo, estableciendo una conexión directa.",
+                    "La salud es clave para el progreso económico y social y es parte de sus objetivos en la dimensión social.",
+                    "Aboga por un Estado de Bienestar y vincula el desarrollo a la solución de la desnutrición/anemia.",
+                    "El gasto en salud es una prioridad tras la reducción de otros gastos.",
+                    "La salud es un pilar fundamental para el desarrollo y el cumplimiento del contrato social.",
+                    "El cierre de brechas en salud es parte del EJE 2: SOCIEDAD Y DERECHOS.",
+                    "La salud es una de las grandes brechas a reducir para la transformación del país.",
+                    "La salud es parte de la visión de un país poderoso y moderno, y de la distribución de recursos en el nuevo modelo federal.",
+                    "El enfoque en la prosperidad compartida a través del libre mercado y el rechazo al intervencionismo estatal.",
+                    "La salud es un objetivo de desarrollo humano integral y la acción del Estado busca la Equidad Territorial y el bienestar de las generaciones futuras."
+                ],
+                "Recursos Humanos en Salud": [
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento.",
+                    "Sin detalle específico en el fragmento."
+                ]
+            }
+        };
+
+        let selectedPartidos = new Set(data.partidos);
+        let collapsedPartidos = new Set();
+
+        function init() {
+            populateTemaFilter();
+            populatePartidoFilter();
+            renderTable();
+            renderChart();
+            updateStats();
+            attachEventListeners();
+            selectAllPartidosVisual();
+        }
+
+        function populateTemaFilter() {
+            const select = document.getElementById('temaFilter');
+            data.temas.forEach(tema => {
+                const option = document.createElement('option');
+                option.value = tema;
+                option.textContent = tema;
+                select.appendChild(option);
+            });
+        }
+
+        function populatePartidoFilter() {
+            const select = document.getElementById('partidoFilter');
+            data.partidos.forEach(partido => {
+                const option = document.createElement('option');
+                option.value = partido;
+                option.textContent = partido;
+                select.appendChild(option);
+            });
+        }
+
+        function renderChart() {
+            const chartContainer = document.getElementById('chartBars');
+            chartContainer.innerHTML = '';
+
+            const temaSelected = document.getElementById('temaFilter').value;
+            const temasToShow = temaSelected ? [temaSelected] : data.temas;
+
+            temasToShow.forEach(tema => {
+                const propuestas = data.propuestas[tema];
+                const partidosToShow = data.partidos.filter(p => selectedPartidos.has(p));
+                
+                let conDetalle = 0;
+                partidosToShow.forEach(partido => {
+                    const idx = data.partidos.indexOf(partido);
+                    const propuesta = propuestas[idx];
+                    if (!propuesta.toLowerCase().includes('sin detalle')) {
+                        conDetalle++;
+                    }
+                });
+
+                const percentage = partidosToShow.length > 0 ? (conDetalle / partidosToShow.length) * 100 : 0;
+
+                const barItem = document.createElement('div');
+                barItem.className = 'bar-item';
+                barItem.innerHTML = `
+                    <div class="bar-label">${tema.substring(0, 30)}...</div>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: ${percentage}%">
+                            <span class="bar-value">${conDetalle}/${partidosToShow.length}</span>
+                        </div>
+                    </div>
+                `;
+                chartContainer.appendChild(barItem);
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('statTotalPartidos').textContent = data.partidos.length;
+            document.getElementById('statFilteredPartidos').textContent = selectedPartidos.size;
+
+            let propuestasFuertes = 0;
+            data.temas.forEach(tema => {
+                const propuestas = data.propuestas[tema];
+                const partidosToShow = data.partidos.filter(p => selectedPartidos.has(p));
+                partidosToShow.forEach(partido => {
+                    const idx = data.partidos.indexOf(partido);
+                    const propuesta = propuestas[idx];
+                    if (propuesta.toLowerCase().startsWith('fuerte:') || propuesta.toLowerCase().startsWith('específico:')) {
+                        propuestasFuertes++;
+                    }
+                });
+            });
+            document.getElementById('statPropuestasFuertes').textContent = propuestasFuertes;
+        }
+
+        function renderTable() {
+            const header = document.getElementById('tableHeader');
+            const body = document.getElementById('tableBody');
+            
+            header.innerHTML = '';
+            body.innerHTML = '';
+
+            const partidosToShow = data.partidos.filter(p => selectedPartidos.has(p));
+
+            if (partidosToShow.length === 0) {
+                body.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 40px; color: var(--color-text-muted);">No hay partidos seleccionados. Use los filtros para buscar partidos.</td></tr>';
+                return;
+            }
+
+            const temaSelected = document.getElementById('temaFilter').value;
+            const temasToShow = temaSelected ? [temaSelected] : data.temas;
+
+            const headerRow = document.createElement('tr');
+            const thTema = document.createElement('th');
+            thTema.textContent = 'Tema';
+            thTema.className = 'tema-column';
+            headerRow.appendChild(thTema);
+
+            partidosToShow.forEach(partido => {
+                const th = document.createElement('th');
+                const isCollapsed = collapsedPartidos.has(partido);
+                const arrow = isCollapsed ? '► ' : '▼ ';
+                th.textContent = arrow + partido;
+                th.className = 'partido-header';
+                th.onclick = () => toggleCollapsePartido(partido);
+                headerRow.appendChild(th);
+            });
+
+            header.appendChild(headerRow);
+
+            temasToShow.forEach(tema => {
+                const row = document.createElement('tr');
+                
+                const tdTema = document.createElement('td');
+                tdTema.textContent = tema;
+                tdTema.className = 'tema-column';
+                row.appendChild(tdTema);
+
+                const propuestas = data.propuestas[tema];
+                
+                partidosToShow.forEach((partido) => {
+                    const partidoIndex = data.partidos.indexOf(partido);
+                    const propuesta = propuestas[partidoIndex];
+                    
+                    const td = document.createElement('td');
+                    
+                    if (collapsedPartidos.has(partido)) {
+                        td.className = 'collapsed-column';
+                        td.textContent = '';
+                    } else {
+                        td.className = 'propuesta-cell';
+                        
+                        if (propuesta.toLowerCase().includes('sin detalle')) {
+                            td.innerHTML = `<span class="sin-detalle">${propuesta}</span>`;
+                        } else if (propuesta.toLowerCase().startsWith('fuerte:')) {
+                            const parts = propuesta.split(':');
+                            td.innerHTML = `<span class="badge badge-success">FUERTE</span> ${parts.slice(1).join(':')}`;
+                        } else if (propuesta.toLowerCase().startsWith('específico:')) {
+                            const parts = propuesta.split(':');
+                            td.innerHTML = `<span class="badge badge-warning">ESPECÍFICO</span> ${parts.slice(1).join(':')}`;
+                        } else {
+                            td.textContent = propuesta;
+                        }
+                    }
+                    
+                    row.appendChild(td);
+                });
+
+                body.appendChild(row);
+            });
+
+            renderChart();
+            updateStats();
+        }
+
+        function filterByContenido() {
+            const searchText = document.getElementById('contenidoFilter').value.toLowerCase();
+            
+            if (!searchText) {
+                selectedPartidos = new Set(data.partidos);
+                renderTable();
+                return;
+            }
+
+            const matchingPartidos = new Set();
+
+            data.temas.forEach(tema => {
+                const propuestas = data.propuestas[tema];
+                propuestas.forEach((propuesta, index) => {
+                    if (propuesta.toLowerCase().includes(searchText)) {
+                        matchingPartidos.add(data.partidos[index]);
+                    }
+                });
+            });
+
+            selectedPartidos = matchingPartidos;
+            updatePartidoFilterVisualFromSet();
+            renderTable();
+        }
+
+        function filterByPartido() {
+            const select = document.getElementById('partidoFilter');
+            const selectedValues = Array.from(select.selectedOptions).map(opt => opt.value);
+
+            if (selectedValues.length === 0) {
+                selectedPartidos = new Set(data.partidos);
+            } else {
+                selectedPartidos = new Set(selectedValues);
+            }
+
+            renderTable();
+        }
+
+        function selectAllPartidos() {
+            selectedPartidos = new Set(data.partidos);
+            selectAllPartidosVisual();
+            renderTable();
+        }
+
+        function selectAllPartidosVisual() {
+            const select = document.getElementById('partidoFilter');
+            Array.from(select.options).forEach(opt => {
+                opt.selected = true;
+            });
+        }
+
+        function clearPartidos() {
+            const select = document.getElementById('partidoFilter');
+            Array.from(select.options).forEach(opt => opt.selected = false);
+            selectedPartidos = new Set();
+            renderTable();
+        }
+
+        function updatePartidoFilterVisualFromSet() {
+            const select = document.getElementById('partidoFilter');
+            Array.from(select.options).forEach(opt => {
+                opt.selected = selectedPartidos.has(opt.value);
+            });
+        }
+
+        function resetFilters() {
+            document.getElementById('temaFilter').value = '';
+            document.getElementById('contenidoFilter').value = '';
+            selectedPartidos = new Set(data.partidos);
+            collapsedPartidos = new Set();
+            selectAllPartidosVisual();
+            renderTable();
+        }
+
+        function toggleCollapsePartido(partido) {
+            if (collapsedPartidos.has(partido)) {
+                collapsedPartidos.delete(partido);
+            } else {
+                collapsedPartidos.add(partido);
+            }
+            renderTable();
+        }
+
+        function attachEventListeners() {
+            document.getElementById('temaFilter').addEventListener('change', renderTable);
+            document.getElementById('partidoFilter').addEventListener('change', filterByPartido);
+            document.getElementById('contenidoFilter').addEventListener('input', filterByContenido);
+        }
+
+        init();
+    </script>
+</body>
+</html>
